@@ -1,7 +1,7 @@
 // const mongoose = require("mongoose");
 // const express = require("express");
 // require("dotenv").config(); // Load environment variables from .env file
-const fs = require("fs");
+// const fs = require("fs");
 
 // const app = express();
 // app.use(express.json());
@@ -122,29 +122,106 @@ const fs = require("fs");
 // });
 
 // Practicing Nodemailer
-var nodemailer = require("nodemailer");
+// var nodemailer = require("nodemailer");
 
-var transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "princekumarsingh.mind2web@gmail.com",
-    pass: "vcmkpdpxhkkuklta",
-  },
-});
+// var transporter = nodemailer.createTransport({
+//   service: "gmail",
+//   auth: {
+//     user: "princekumarsingh.mind2web@gmail.com",
+//     pass: "vcmkpdpxhkkuklta",
+//   },
+// });
 
-var mailOptions = {
-  from: "princekumarsingh.mind2web@gmail.com", //not so important
-  to: "princid85@gmail.com",
-  subject: "Sending Email using Node.js",
-  html: "<h1>hey there...</h1><p>Get the Job done!</p>", //more priority than text
-  text: "That was easy! Trying to send mail with nodemailer...",
-  // This prioritization is based on the assumption that HTML provides more formatting options and allows for a richer presentation compared to plain text.
-};
+// var mailOptions = {
+//   from: "princekumarsingh.mind2web@gmail.com", //not so important
+//   to: "rahuldadwal1122@gmail.com",
+//   subject: "Sending Email using Node.js",
+//   html: "<h1>hey there...</h1><p>Get the Job done!</p>", //more priority than text
+//   text: "That was easy! Trying to send mail with nodemailer...",
+//   // This prioritization is based on the assumption that HTML provides more formatting options and allows for a richer presentation compared to plain text.
+// };
 
-transporter.sendMail(mailOptions, function (error, info) {
-  if (error) {
-    console.log(error);
+// transporter.sendMail(mailOptions, function (error, info) {
+//   if (error) {
+//     console.log(error);
+//   } else {
+//     console.log("Email sent: " + info.response);
+//   }
+// });
+
+
+// const ffmpeg = require("fluent-ffmpeg");
+// const ffprobePath = require("ffprobe-static").path;
+
+// // Set the ffprobe path
+// ffmpeg.setFfprobePath(ffprobePath);
+
+// const videoPath = "sample_video.mp4";
+
+// ffmpeg.ffprobe(videoPath, (err, metadata) => {
+//   if (err) {
+//     console.error("Error reading video file:", err);
+//   } else {
+//     console.log("Video metadata:", metadata);
+//   }
+// });
+
+
+const ffmpeg = require("fluent-ffmpeg");
+const ffmpegPath = require("ffmpeg-static");
+const ffprobePath = require("ffprobe-static").path;
+const fs = require("fs");
+const path = require("path");
+
+// Set the ffprobe path
+ffmpeg.setFfprobePath(ffprobePath);
+
+// Set the ffmpeg path
+ffmpeg.setFfmpegPath(ffmpegPath);
+
+const videoPath = "sample_video2.mp4";
+const outputDirectory = "assets/frames";
+
+// Ensure the output directory exists
+if (!fs.existsSync(outputDirectory)) {
+  fs.mkdirSync(outputDirectory, { recursive: true });
+} else {
+  // Delete existing files in the output directory
+  fs.readdirSync(outputDirectory).forEach((file) => {
+    const filePath = path.join(outputDirectory, file);
+    fs.unlinkSync(filePath);
+    console.log(`Deleted file: ${filePath}`);
+  });
+}
+
+// Get video duration from metadata
+ffmpeg.ffprobe(videoPath, (err, metadata) => {
+  if (err) {
+    console.error("Error reading video file:", err);
   } else {
-    console.log("Email sent: " + info.response);
+    const duration = metadata.format.duration;
+    const chunkDuration = duration / 6; // Divide the video into 10 equal parts
+
+    // Split the video into 10 parts and extract one image from each chunk
+    for (let i = 0; i < 6; i++) {
+      const startTime = i * chunkDuration; // Start time for each chunk
+      const outputFileName = `chunk_${i + 1}.mp4`; // Output file name for the chunk
+      const imageFileName = `frame_${i + 1}.png`; // Output file name for the frame image
+
+      // Use a closure to capture the current value of i
+      (function (index) {
+        // Extract one image from each chunk
+        ffmpeg(videoPath)
+          .setStartTime(startTime)
+          .outputOptions("-vframes 1") // Extract only one frame
+          .output(path.join(outputDirectory, imageFileName)) // Save the image in the root directory
+          .on("end", function () {
+            console.log(
+              `Frame image ${index + 1} extracted from chunk ${index + 1}`
+            );
+          })
+          .run();
+      })(i);
+    }
   }
 });
